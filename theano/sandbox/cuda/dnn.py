@@ -1003,6 +1003,7 @@ class GpuDnnSoftmaxBase(DnnBase):
 
     def __init__(self, tensor_format, algo, mode):
         assert(tensor_format in ('bc01', 'b01c'))
+        DnnBase.__init__(self)
         self.tensor_format = tensor_format
 
         assert(algo in ('fast', 'accurate'))
@@ -1017,13 +1018,13 @@ class GpuDnnSoftmaxBase(DnnBase):
 
     def _define_tensor4d_desc(self, name, id):
         return """
-cudnnTensorDescriptor_t %(name)s_%(id)d;
+cudnnTensorDescriptor_t %(id)s_%(name)s;
 """ % dict(name=name, id=id)
 
     def _init_tensor4d_desc(self, name, id, fail):
         return """
-%(name)s_%(id)s = NULL;
-if ((err%(name)s = cudnnCreateTensorDescriptor(&%(name)s_%(id)s)) != CUDNN_STATUS_SUCCESS) {
+%(id)s_%(name)s = NULL;
+if ((err%(name)s = cudnnCreateTensorDescriptor(&%(id)s_%(name)s)) != CUDNN_STATUS_SUCCESS) {
   PyErr_Format(PyExc_MemoryError, "could not allocate tensor descriptor "
                ": %%s", cudnnGetErrorString(err%(name)s));
   %(fail)s
@@ -1032,14 +1033,14 @@ if ((err%(name)s = cudnnCreateTensorDescriptor(&%(name)s_%(id)s)) != CUDNN_STATU
 
     def _clean_tensor4d_desc(self, name, id):
         return """
-if(%(name)s_%(id)s!= NULL)
-  cudnnDestroyTensorDescriptor(%(name)s_%(id)s);
+if(%(id)s_%(name)s!= NULL)
+  cudnnDestroyTensorDescriptor(%(id)s_%(name)s);
 """ % dict(name=name, id=id)
 
     def c_support_code_struct(self, node, name):
         result = ''
-        for name in self.tensor_4d_descs:
-            result += self._define_tensor4d_desc(name, name)
+        for id in self.tensor_4d_descs:
+            result += self._define_tensor4d_desc(name, id)
         return result
 
     def c_init_code_struct(self, node, name, sub):
@@ -1047,14 +1048,14 @@ if(%(name)s_%(id)s!= NULL)
 cudnnStatus_t err%(name)s;
 """ % dict(name=name)
 
-        for name in self.tensor_4d_descs:
-            result += self._init_tensor4d_desc(name, name, sub['fail'])
+        for id in self.tensor_4d_descs:
+            result += self._init_tensor4d_desc(name, id, sub['fail'])
         return result
 
     def c_cleanup_code_struct(self, node, name):
         result = ''
-        for name in self.tensor_4d_descs:
-            result += self._clean_tensor4d_desc(name, name)
+        for id in self.tensor_4d_descs:
+            result += self._clean_tensor4d_desc(name, id)
         return result
 
     def c_code(self, node, name, inputs, outputs, sub):
