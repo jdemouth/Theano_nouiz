@@ -28,6 +28,7 @@ def dnn_available():
             dnn_available.avail = False
         else:
             preambule = """
+#include <assert.h>
 #include <stdio.h>
 #include <cuda.h>
 #include <cudnn.h>

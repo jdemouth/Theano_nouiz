@@ -38,7 +38,7 @@ static inline const char *cudnnGetErrorString(cudnnStatus_t err) {
 #define cudnnDestroyTensorDescriptor cudnnDestroyTensor4dDescriptor
 #define cudnnSetFilter4dDescriptor cudnnSetFilterDescriptor
 
-typedef cudnnTensorDescriptor_t cudnnTensor4dDescriptor_t;
+typedef cudnnTensor4dDescriptor_t cudnnTensorDescriptor_t;
 
 static inline cudnnStatus_t
 cdnnGetConvolution2dForwardOutputDim(
@@ -54,6 +54,7 @@ cdnnGetConvolution2dForwardOutputDim(
 }
 
 typedef int cudnnConvolutionFwdAlgo_t;
+typedef int cudnnConvolutionFwdPreference_t;
 
 static inline cudnnStatus_t
 cudnnGetConvolutionForwardAlgorithm(
@@ -73,7 +74,7 @@ static inline cudnnStatus_t
 cudnnConvolutionForward_v2(
   cudnnHandle_t handle,
   const void *alpha,
-  const cudnnTensorDescriptor_t srcDest,
+  const cudnnTensorDescriptor_t srcDesc,
   const void *srcData,
   const cudnnFilterDescriptor_t filterDesc,
   const void *filterData,
@@ -113,19 +114,17 @@ cudnnConvolutionBackwardFilter_v2(
 					CUDNN_RESULT_NO_ACCUMULATE);
 }
 
-#define cudnnConvolutionBackwardFilter cudnnConvolutionBackwardFilter_v2
-
 static inline cudnnStatus_t
 cudnnConvolutionBackwardData_v2(
   cudnnHandle_t	handle,
   const void *alpha,
-  const cudnnTensorDescriptor_t filterDesc,
+  cudnnTensorDescriptor_t filterDesc,
   const void *filterData,
-  const cudnnTensorDescriptor_t diffDesc,
+  cudnnTensorDescriptor_t diffDesc,
   const void *diffData,
-  const cudnnConvolutionDescriptor_t convDesc,
+  cudnnConvolutionDescriptor_t convDesc,
   const void *beta,
-  const cudnnFilterDescriptor_t gradDesc,
+  cudnnFilterDescriptor_t gradDesc,
   void *gradData) {
   assert(*(float *)alpha == 1.0);
   assert(*(float *)beta == 0.0);
@@ -135,8 +134,11 @@ cudnnConvolutionBackwardData_v2(
 					CUDNN_RESULT_NO_ACCUMULATE);
 }
 
-#define cudnnConvolutionBackwardData cudnnConvolutionBackwardData_v2
+#else //ifndef CUDNN_VERSION
 
-#endif
+#define cudnnConvolutionBackwardFilter_v2 cudnnConvolutionBackwardFilter
+#define cudnnConvolutionBackwardData_v2 cudnnConvolutionBackwardData
 
-#endif
+#endif //ifndef CUDNN_VERSION
+
+#endif //ifndef CUDNN_HELPER_H
