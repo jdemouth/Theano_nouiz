@@ -186,7 +186,7 @@ static inline std::size_t ceilInt(std::size_t m, std::size_t n) {
 
 class Mutex {
 #ifdef WIN32
-    CRITICAL_SECTION mCriticalSection;
+    mutable CRITICAL_SECTION mCriticalSection;
 #else
     pthread_mutex_t  mMutex;
 #endif
@@ -381,6 +381,8 @@ public:
         mStream = stream; 
 #ifdef CUDA_API_PER_THREAD_DEFAULT_STREAM
         mIsStreamBlocking = false;
+#elif CUDART_VERSION < 5050
+        mIsStreamBlocking = true;
 #else
         unsigned flags = 0;
         CNMEM_CHECK_CUDA(cudaStreamGetFlags(mStream, &flags));
